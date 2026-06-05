@@ -1,0 +1,31 @@
+name: Build and Push to Docker Hub
+
+# 1. فوقاش كيديماري هاد الـ Pipeline؟
+on:
+  push:
+    branches: [ "master" ]
+
+# 2. شنو هما المهمات (Jobs) اللي غايدير؟
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest # غايكريي سيرفر وهمي فابور عند GitHub مـإنستالي فيه Ubuntu
+
+    steps:
+    # الخطوة أ: كيهز الكود ديالك من GitHub ويحطو وسط السيرفر الوهمي
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # الخطوة ب: كيدخل لـ Docker Hub ديالك باستعمال ساروت وتوكن سريين
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # الخطوة ج: كيبني الـ Image وكيدفعها (Push) لـ Docker Hub نيشان
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./angular/angular # المسار فين كاين الـ Dockerfile ديالنا
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/angular-pipeline:latest
