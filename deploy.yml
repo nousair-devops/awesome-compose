@@ -1,0 +1,41 @@
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ docker login -u larine2020 }}
+        password: ${{ dckr_pat_YKwkfqeyYnFaPFBcLUF40kWeO-Q }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./angular/angular
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/angular-pipeline:latest
+
+    # ==================== هادو هما السطور الجداد ديال الـ Deployment ====================
+    - name: Deploy to DigitalOcean VPS
+      uses: appleboy/ssh-action@v1.0.3 # أكشن جاهزة كتدخل للسيرفر بـ SSH
+      with:
+        host: ${{ secrets.SERVER_HOST }}       # الـ IP ديال السيرفر ديالك
+        username: root                          # اسم المستخدم ف السيرفر
+        key: ${{ secrets.SERVER_SSH_KEY }}     # الساروت السري (Private Key)
+        script: |
+          # 1. كيدخل للمجلد ديال المشروع ف السيرفر
+          cd /home/project/awesome-compose/angular/angular || mkdir -p /home/project/awesome-compose/angular/angular && cd /home/project/awesome-compose/angular/angular
+          
+          # 2. كيجيب الـ Image الجديدة الطايبة من Docker Hub
+          docker compose pull
+          
+          # 3. كيعاود يديماري الـ Container الجديد ف أجزاء من الثانية (Zero Downtime)
+          docker compose up -d
